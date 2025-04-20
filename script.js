@@ -26,6 +26,8 @@ const requestPermissionBtn = document.getElementById('requestPermissionBtn');
 const contentToggle = document.getElementById('contentToggle');
 const studyBlog = document.getElementById('studyBlog');
 const mainContent = document.getElementById('mainContent');
+const backgroundIndicator = document.getElementById('backgroundIndicator');
+let isBackgroundRecording = false;
 
 // Check if device is mobile
 const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
@@ -191,7 +193,7 @@ async function setupCamera(facingMode) {
 
         const constraints = {
             video: {
-                facingMode: facingMode,
+                facingMode: facingMode || 'environment', // Default to back camera
                 width: { ideal: isMobile ? 1280 : 1920 },
                 height: { ideal: isMobile ? 720 : 1080 }
             },
@@ -353,7 +355,7 @@ function toggleContent() {
     
     // Update button text based on current view
     if (studyBlog.classList.contains('active')) {
-        contentToggle.innerHTML = '<i class="fas fa-exchange-alt"></i> Show Video Recorder';
+        contentToggle.innerHTML = '<i class="fas fa-exchange-alt"></i> Switch';
     } else {
         contentToggle.innerHTML = '<i class="fas fa-exchange-alt"></i> Show Study Blog';
     }
@@ -365,25 +367,81 @@ document.addEventListener('DOMContentLoaded', () => {
     requestPermissionBtn.addEventListener('click', requestPermissions);
     micBtn.addEventListener('click', toggleMicrophone);
     contentToggle.addEventListener('click', toggleContent);
-});
-
-// Event listeners
-mirrorBtn.addEventListener('click', toggleMirror);
-torchBtn.addEventListener('click', toggleTorch);
-pauseBtn.addEventListener('click', togglePause);
-
-cameraSelect.addEventListener('change', () => {
-    const facingMode = cameraSelect.value;
-    setupCamera(facingMode);
-});
-
-startBtn.addEventListener('click', async () => {
-    try {
+    
+    // Add event listeners for recording buttons
+    startBtn.addEventListener('click', startRecording);
+    stopBtn.addEventListener('click', stopRecording);
+    pauseBtn.addEventListener('click', togglePause);
+    mirrorBtn.addEventListener('click', toggleMirror);
+    torchBtn.addEventListener('click', toggleTorch);
+    
+    // Set default camera to back camera and update select
+    cameraSelect.value = 'environment';
+    
+    // Add event listener for camera selection
+    cameraSelect.addEventListener('change', () => {
         const facingMode = cameraSelect.value;
-        await setupCamera(facingMode);
+        setupCamera(facingMode);
+    });
+});
+
+// Request wake lock to prevent device from sleeping
+let wakeLock = null;
+async function requestWakeLock() {
+    try {
+        if ('wakeLock' in navigator) {
+            wakeLock = await navigator.wakeLock.request('screen');
+            wakeLock.addEventListener('release', () => {
+                console.log('Wake Lock was released');
+                // Try to reacquire wake lock if still recording
+                if (isRecording) {
+                    requestWakeLock();
+                }
+            });
+        }
+    } catch (err) {
+        console.error('Error requesting wake lock:', err);
+        // Retry after a delay if still recording
+        if (isRecording) {
+            setTimeout(requestWakeLock, 1000);
+        }
+    }
+}
+
+// Handle visibility changes
+document.addEventListener('visibilitychange', async () => {
+    if (document.hidden && isRecording) {
+        isBackgroundRecording = true;
+        backgroundIndicator.classList.add('active');
+        await requestWakeLock();
+        
+        // Ensure recording continues
+        if (mediaRecorder && mediaRecorder.state === 'paused') {
+            mediaRecorder.resume();
+        }
+    } else {
+        isBackgroundRecording = false;
+        backgroundIndicator.classList.remove('active');
+    }
+});
+
+// Handle page unload
+window.addEventListener('beforeunload', (e) => {
+    if (isRecording) {
+        e.preventDefault();
+        e.returnValue = '';
+        return 'Recording is in progress. Are you sure you want to leave?';
+    }
+});
+
+// Modify startRecording function
+async function startRecording() {
+    try {
+        if (!stream) {
+            await setupCamera('user');
+        }
 
         const mimeType = getSupportedMIME();
-
         mediaRecorder = new MediaRecorder(stream, {
             mimeType: mimeType,
             videoBitsPerSecond: isMobile ? 2500000 : 5000000,
@@ -391,18 +449,26 @@ startBtn.addEventListener('click', async () => {
         });
 
         recordedChunks = [];
-
         mediaRecorder.ondataavailable = (event) => {
             if (event.data.size > 0) {
                 recordedChunks.push(event.data);
+                // Save chunks periodically to prevent memory issues
+                if (recordedChunks.length > 10) {
+                    const blob = new Blob(recordedChunks, { type: mimeType });
+                    const filename = `recording-part-${new Date().toISOString().replace(/[:.]/g, '-')}.mp4`;
+                    downloadVideo(blob, filename);
+                    recordedChunks = [];
+                }
             }
         };
 
         mediaRecorder.onstop = () => {
-            const blob = new Blob(recordedChunks, { type: mimeType });
-            const filename = `recording-${new Date().toISOString().replace(/[:.]/g, '-')}.mp4`;
-            downloadVideo(blob, filename);
-            recordedChunks = [];
+            if (recordedChunks.length > 0) {
+                const blob = new Blob(recordedChunks, { type: mimeType });
+                const filename = `recording-${new Date().toISOString().replace(/[:.]/g, '-')}.mp4`;
+                downloadVideo(blob, filename);
+                recordedChunks = [];
+            }
             
             clearInterval(recordingTimer);
             if (recordingTime) {
@@ -412,37 +478,48 @@ startBtn.addEventListener('click', async () => {
 
         mediaRecorder.start(1000);
         isRecording = true;
-        isPaused = false;
+        recordingStartTime = Date.now();
+        recordingTimer = setInterval(updateRecordingTime, 1000);
+        recordingStatus.textContent = 'Recording...';
+        
+        // Request wake lock when starting recording
+        await requestWakeLock();
+        
+        // Update UI
         startBtn.disabled = true;
         stopBtn.disabled = false;
         pauseBtn.disabled = false;
-        recordingStatus.textContent = 'Recording...';
-        recordingStatus.style.color = 'var(--accent-color)';
-        
-        // Start recording timer
-        recordingStartTime = Date.now();
-        recordingTimer = setInterval(updateRecordingTime, 1000);
     } catch (error) {
         console.error('Error starting recording:', error);
-        showError('Error starting recording. Please try again.');
+        showError('Error starting recording. Please check your camera permissions.');
     }
-});
+}
 
-stopBtn.addEventListener('click', () => {
+// Modify stopRecording function
+function stopRecording() {
     if (mediaRecorder && isRecording) {
         mediaRecorder.stop();
         isRecording = false;
         isPaused = false;
+        recordingStatus.textContent = 'Ready';
+        
+        // Release wake lock when stopping recording
+        if (wakeLock) {
+            wakeLock.release();
+            wakeLock = null;
+        }
+        
+        // Update UI
         startBtn.disabled = false;
         stopBtn.disabled = true;
         pauseBtn.disabled = true;
-        recordingStatus.textContent = 'Not Recording';
-        recordingStatus.style.color = 'var(--text-color)';
-        
-        // Stop recording timer
-        clearInterval(recordingTimer);
-        if (recordingTime) {
-            recordingTime.textContent = '00:00:00';
-        }
+        backgroundIndicator.classList.remove('active');
     }
-});
+}
+
+// Add periodic wake lock check
+setInterval(() => {
+    if (isRecording && (!wakeLock || wakeLock.released)) {
+        requestWakeLock();
+    }
+}, 30000); // Check every 30 seconds

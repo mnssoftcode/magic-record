@@ -54,7 +54,14 @@
                     </button>
                 </div>
             </div>
-            <video id="videoElement" autoplay playsinline></video>
+            <video id="videoElement" autoplay playsinline muted></video>
+            <div class="recording-indicator">
+                <span id="recordingStatus">Ready</span>
+                <span id="recordingTime">00:00:00</span>
+                <span id="backgroundIndicator" class="background-indicator" title="Background Recording Active">
+                    <i class="fas fa-record-vinyl"></i>
+                </span>
+            </div>
             <div class="video-controls">
                 <button id="mirrorBtn" class="control-btn">
                     <i class="fas fa-sync-alt"></i>
@@ -69,10 +76,10 @@
         </div>
         
         <div class="controls">
-            <div class="recording-info">
+            <!-- <div class="recording-info">
                 <span id="recordingStatus">Not Recording</span>
                 <span id="recordingTime">00:00:00</span>
-            </div>
+            </div> -->
             <div class="buttons">
                 <button id="startBtn" class="btn primary">
                     <i class="fas fa-circle"></i> Start
