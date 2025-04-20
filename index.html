@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Magic Record</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Study Blog</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <meta name="theme-color" content="#4a90e2">
@@ -11,92 +11,86 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 </head>
 <body>
-    <div class="toggle-container">
-        <button id="toggleBtn" class="toggle-btn">
-            <i class="fas fa-eye"></i> Switch View
-        </button>
-    </div>
+    <button id="contentToggle" class="toggle-btn">
+        <i class="fas fa-exchange-alt"></i> Toggle Content
+    </button>
 
-    <div id="recordingApp" class="app-container">
-        <div class="container">
-            <div class="video-container">
-                <div class="permission-overlay" id="permissionOverlay">
-                    <div class="permission-content">
-                        <i class="fas fa-camera"></i>
-                        <h2>Camera Access</h2>
-                        <p>Please allow camera access to start recording.</p>
-                        <button id="requestPermissionBtn" class="btn primary">
-                            <i class="fas fa-check"></i> Allow Access
-                        </button>
-                    </div>
-                </div>
-                <video id="videoElement" autoplay playsinline></video>
-                <div class="video-controls">
-                    <button id="mirrorBtn" class="control-btn">
-                        <i class="fas fa-sync-alt"></i>
-                    </button>
-                    <button id="torchBtn" class="control-btn" style="display: none;">
-                        <i class="fas fa-lightbulb"></i>
-                    </button>
-                    <button id="micBtn" class="control-btn">
-                        <i class="fas fa-microphone-slash"></i>
-                    </button>
-                </div>
-            </div>
+    <div id="studyBlog" class="study-blog">
+        <header class="blog-header">
+            <h1>Study Blog</h1>
+            <p>Academic Resources & Learning Materials</p>
+        </header>
+        
+        <div class="blog-content">
+            <article class="blog-post">
+                <h2>Mathematics Fundamentals</h2>
+                <p class="post-meta">Posted on March 15, 2024</p>
+                <p>Understanding the core principles of calculus and linear algebra is essential for advanced mathematics...</p>
+            </article>
             
-            <div class="controls">
-                <div class="recording-info">
-                    <span id="recordingStatus">Not Recording</span>
-                    <span id="recordingTime">00:00:00</span>
-                </div>
-                <div class="buttons">
-                    <button id="startBtn" class="btn primary">
-                        <i class="fas fa-circle"></i> Start
-                    </button>
-                    <button id="pauseBtn" class="btn secondary" disabled>
-                        <i class="fas fa-pause"></i> Pause
-                    </button>
-                    <button id="stopBtn" class="btn danger" disabled>
-                        <i class="fas fa-stop"></i> Stop
-                    </button>
-                </div>
-                <div class="camera-select">
-                    <label for="cameraSelect">Camera:</label>
-                    <select id="cameraSelect">
-                        <option value="user">Front Camera</option>
-                        <option value="environment">Back Camera</option>
-                    </select>
-                </div>
-            </div>
+            <article class="blog-post">
+                <h2>Physics Concepts</h2>
+                <p class="post-meta">Posted on March 14, 2024</p>
+                <p>Exploring the fundamental laws of motion and their applications in real-world scenarios...</p>
+            </article>
+            
+            <article class="blog-post">
+                <h2>Chemistry Basics</h2>
+                <p class="post-meta">Posted on March 13, 2024</p>
+                <p>An introduction to atomic structure and chemical bonding...</p>
+            </article>
         </div>
     </div>
 
-    <div id="dummyBlog" class="app-container" style="display: none;">
-        <div class="blog-container">
-            <header class="blog-header">
-                <h1>Tech Insights</h1>
-                <p>Latest in Technology and Innovation</p>
-            </header>
-            <main class="blog-content">
-                <article class="blog-post">
-                    <h2>The Future of Web Development</h2>
-                    <p class="post-meta">Posted on March 15, 2024</p>
-                    <p>Web development continues to evolve at a rapid pace. New frameworks and tools are emerging every day, making it easier for developers to create powerful web applications...</p>
-                </article>
-                <article class="blog-post">
-                    <h2>Understanding AI and Machine Learning</h2>
-                    <p class="post-meta">Posted on March 10, 2024</p>
-                    <p>Artificial Intelligence and Machine Learning are transforming industries across the globe. From healthcare to finance, these technologies are making significant impacts...</p>
-                </article>
-                <article class="blog-post">
-                    <h2>Cybersecurity Best Practices</h2>
-                    <p class="post-meta">Posted on March 5, 2024</p>
-                    <p>In today's digital age, cybersecurity is more important than ever. Here are some essential practices to keep your data safe and secure...</p>
-                </article>
-            </main>
-            <footer class="blog-footer">
-                <p>&copy; 2024 Tech Insights. All rights reserved.</p>
-            </footer>
+    <div id="mainContent" class="container">
+        <div class="video-container">
+            <div class="permission-overlay" id="permissionOverlay">
+                <div class="permission-content">
+                    <i class="fas fa-camera"></i>
+                    <h2>Camera & Microphone Access</h2>
+                    <p>Please allow camera and microphone access to start recording.</p>
+                    <button id="requestPermissionBtn" class="btn primary">
+                        <i class="fas fa-check"></i> Allow Access
+                    </button>
+                </div>
+            </div>
+            <video id="videoElement" autoplay playsinline></video>
+            <div class="video-controls">
+                <button id="mirrorBtn" class="control-btn">
+                    <i class="fas fa-sync-alt"></i>
+                </button>
+                <button id="micBtn" class="control-btn" title="Toggle Microphone">
+                    <i class="fas fa-microphone-slash"></i>
+                </button>
+                <button id="torchBtn" class="control-btn" style="display: none;">
+                    <i class="fas fa-lightbulb"></i>
+                </button>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <div class="recording-info">
+                <span id="recordingStatus">Not Recording</span>
+                <span id="recordingTime">00:00:00</span>
+            </div>
+            <div class="buttons">
+                <button id="startBtn" class="btn primary">
+                    <i class="fas fa-circle"></i> Start
+                </button>
+                <button id="pauseBtn" class="btn secondary" disabled>
+                    <i class="fas fa-pause"></i> Pause
+                </button>
+                <button id="stopBtn" class="btn danger" disabled>
+                    <i class="fas fa-stop"></i> Stop
+                </button>
+            </div>
+            <div class="camera-select">
+                <label for="cameraSelect">Camera:</label>
+                <select id="cameraSelect">
+                    <option value="user">Front Camera</option>
+                    <option value="environment">Back Camera</option>
+                </select>
+            </div>
         </div>
     </div>
     <script src="script.js"></script>

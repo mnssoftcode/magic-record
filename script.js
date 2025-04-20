@@ -2,14 +2,14 @@ let mediaRecorder;
 let recordedChunks = [];
 let stream;
 let isRecording = false;
-let isMirrored = true;
+let isMirrored = false;
 let isPaused = false;
 let isTorchOn = false;
+let isMicEnabled = false;
 let videoTrack;
+let audioTrack;
 let recordingStartTime;
 let recordingTimer;
-let isMicEnabled = false;
-const micBtn = document.getElementById('micBtn');
 
 const videoElement = document.getElementById('videoElement');
 const startBtn = document.getElementById('startBtn');
@@ -19,13 +19,13 @@ const cameraSelect = document.getElementById('cameraSelect');
 const recordingStatus = document.getElementById('recordingStatus');
 const mirrorBtn = document.getElementById('mirrorBtn');
 const torchBtn = document.getElementById('torchBtn');
+const micBtn = document.getElementById('micBtn');
 const recordingTime = document.getElementById('recordingTime');
 const permissionOverlay = document.getElementById('permissionOverlay');
 const requestPermissionBtn = document.getElementById('requestPermissionBtn');
-const toggleBtn = document.getElementById('toggleBtn');
-const recordingApp = document.getElementById('recordingApp');
-const dummyBlog = document.getElementById('dummyBlog');
-let isBlogView = false;
+const contentToggle = document.getElementById('contentToggle');
+const studyBlog = document.getElementById('studyBlog');
+const mainContent = document.getElementById('mainContent');
 
 // Check if device is mobile
 const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
@@ -122,15 +122,13 @@ function handleOrientationChange() {
 }
 
 function toggleMirror() {
-    if (cameraSelect.value === 'user') {
-        isMirrored = !isMirrored;
-        if (isMirrored) {
-            videoElement.classList.add('mirrored');
-            mirrorBtn.classList.add('active');
-        } else {
-            videoElement.classList.remove('mirrored');
-            mirrorBtn.classList.remove('active');
-        }
+    isMirrored = !isMirrored;
+    if (isMirrored) {
+        videoElement.classList.add('mirrored');
+        mirrorBtn.classList.add('active');
+    } else {
+        videoElement.classList.remove('mirrored');
+        mirrorBtn.classList.remove('active');
     }
 }
 
@@ -143,13 +141,33 @@ function showError(message) {
     }, 3000);
 }
 
-function updateMicButton() {
-    if (isMicEnabled) {
-        micBtn.innerHTML = '<i class="fas fa-microphone"></i>';
-        micBtn.classList.add('active');
-    } else {
-        micBtn.innerHTML = '<i class="fas fa-microphone-slash"></i>';
-        micBtn.classList.remove('active');
+async function toggleMicrophone() {
+    try {
+        if (isMicEnabled) {
+            // Disable microphone
+            if (audioTrack) {
+                audioTrack.enabled = false;
+            }
+            isMicEnabled = false;
+            micBtn.innerHTML = '<i class="fas fa-microphone-slash"></i>';
+            micBtn.classList.remove('active');
+        } else {
+            // Enable microphone
+            if (audioTrack) {
+                audioTrack.enabled = true;
+            } else {
+                // Request microphone access
+                const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                audioTrack = audioStream.getAudioTracks()[0];
+                stream.addTrack(audioTrack);
+            }
+            isMicEnabled = true;
+            micBtn.innerHTML = '<i class="fas fa-microphone"></i>';
+            micBtn.classList.add('active');
+        }
+    } catch (error) {
+        console.error('Error toggling microphone:', error);
+        showError('Error accessing microphone. Please check your permissions.');
     }
 }
 
@@ -177,13 +195,7 @@ async function setupCamera(facingMode) {
                 width: { ideal: isMobile ? 1280 : 1920 },
                 height: { ideal: isMobile ? 720 : 1080 }
             },
-            audio: isMicEnabled ? {
-                echoCancellation: true,
-                noiseSuppression: true,
-                autoGainControl: true,
-                sampleRate: 48000,
-                channelCount: 1
-            } : false
+            audio: false // Start with audio disabled
         };
 
         stream = await navigator.mediaDevices.getUserMedia(constraints);
@@ -192,17 +204,12 @@ async function setupCamera(facingMode) {
 
         // Update torch button state after a short delay to ensure video track is ready
         setTimeout(updateTorchButton, 500);
-        setTimeout(updateMicButton, 500);
 
-        // Apply mirror effect if using front camera
-        if (facingMode === 'user') {
-            isMirrored = true;
+        // Apply mirror effect if enabled
+        if (isMirrored) {
             videoElement.classList.add('mirrored');
-            mirrorBtn.classList.add('active');
         } else {
-            isMirrored = false;
             videoElement.classList.remove('mirrored');
-            mirrorBtn.classList.remove('active');
         }
 
         // Handle orientation changes on mobile
@@ -217,7 +224,7 @@ async function setupCamera(facingMode) {
             mediaRecorder = new MediaRecorder(stream, {
                 mimeType: mimeType,
                 videoBitsPerSecond: isMobile ? 2500000 : 5000000,
-                audioBitsPerSecond: 128000
+                audioBitsPerSecond: isMicEnabled ? 128000 : 0
             });
 
             recordedChunks = [];
@@ -261,40 +268,17 @@ async function setupCamera(facingMode) {
 
 // Function to download video
 function downloadVideo(blob, filename) {
-    try {
-        // Try using the download attribute first
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.style.display = 'none';
-        a.href = url;
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        
-        // Clean up
-        setTimeout(() => {
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-        }, 100);
-    } catch (error) {
-        console.error('Error downloading with download attribute:', error);
-        
-        // Fallback for Brave browser
-        try {
-            const reader = new FileReader();
-            reader.onload = function() {
-                const base64data = reader.result;
-                const link = document.createElement('a');
-                link.href = base64data;
-                link.download = filename;
-                link.click();
-            };
-            reader.readAsDataURL(blob);
-        } catch (fallbackError) {
-            console.error('Error with fallback download method:', fallbackError);
-            showError('Could not download the video. Please try a different browser or method.');
-        }
-    }
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.style.display = 'none';
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }, 100);
 }
 
 // Function to update recording time
@@ -363,10 +347,24 @@ async function requestPermissions() {
     }
 }
 
+function toggleContent() {
+    studyBlog.classList.toggle('active');
+    mainContent.classList.toggle('hidden');
+    
+    // Update button text based on current view
+    if (studyBlog.classList.contains('active')) {
+        contentToggle.innerHTML = '<i class="fas fa-exchange-alt"></i> Show Video Recorder';
+    } else {
+        contentToggle.innerHTML = '<i class="fas fa-exchange-alt"></i> Show Study Blog';
+    }
+}
+
 // Initialize the app
 document.addEventListener('DOMContentLoaded', () => {
     checkPermissions();
     requestPermissionBtn.addEventListener('click', requestPermissions);
+    micBtn.addEventListener('click', toggleMicrophone);
+    contentToggle.addEventListener('click', toggleContent);
 });
 
 // Event listeners
@@ -389,7 +387,7 @@ startBtn.addEventListener('click', async () => {
         mediaRecorder = new MediaRecorder(stream, {
             mimeType: mimeType,
             videoBitsPerSecond: isMobile ? 2500000 : 5000000,
-            audioBitsPerSecond: 128000
+            audioBitsPerSecond: isMicEnabled ? 128000 : 0
         });
 
         recordedChunks = [];
@@ -448,35 +446,3 @@ stopBtn.addEventListener('click', () => {
         }
     }
 });
-
-function toggleMic() {
-    isMicEnabled = !isMicEnabled;
-    updateMicButton();
-    
-    if (stream) {
-        const audioTracks = stream.getAudioTracks();
-        audioTracks.forEach(track => {
-            track.enabled = isMicEnabled;
-        });
-    }
-}
-
-// Add event listener for mic button
-micBtn.addEventListener('click', toggleMic);
-
-// Add this function to handle view switching
-function toggleView() {
-    isBlogView = !isBlogView;
-    if (isBlogView) {
-        recordingApp.style.display = 'none';
-        dummyBlog.style.display = 'block';
-        toggleBtn.innerHTML = '<i class="fas fa-camera"></i> Switch';
-    } else {
-        recordingApp.style.display = 'block';
-        dummyBlog.style.display = 'none';
-        toggleBtn.innerHTML = '<i class="fas fa-eye"></i> Switch View';
-    }
-}
-
-// Add event listener for toggle button
-toggleBtn.addEventListener('click', toggleView);

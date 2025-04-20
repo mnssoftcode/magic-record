@@ -15,7 +15,6 @@
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    -webkit-tap-highlight-color: transparent;
 }
 
 body {
@@ -23,8 +22,6 @@ body {
     background-color: var(--bg-color);
     color: var(--text-color);
     line-height: 1.6;
-    overflow-x: hidden;
-    touch-action: manipulation;
     min-height: 100vh;
     display: flex;
     justify-content: center;
@@ -41,12 +38,6 @@ body {
     max-width: 800px;
     position: relative;
     overflow: hidden;
-    max-width: 100%;
-    margin: 0 auto;
-    padding: 10px;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
 }
 
 h1 {
@@ -60,13 +51,12 @@ h1 {
 .video-container {
     position: relative;
     width: 100%;
-    max-width: 100%;
-    margin: 0 auto 10px;
+    max-width: 800px;
+    margin: 0 auto 20px;
     background-color: #000;
     border-radius: 12px;
     overflow: hidden;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    aspect-ratio: 16/9;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
 }
 
 .permission-overlay {
@@ -75,98 +65,42 @@ h1 {
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.9);
+    background-color: var(--overlay-bg);
     display: flex;
     align-items: center;
     justify-content: center;
     z-index: 10;
-    backdrop-filter: blur(5px);
 }
 
 .permission-content {
     text-align: center;
     color: white;
-    padding: 30px;
-    max-width: 90%;
-    background-color: rgba(255, 255, 255, 0.1);
-    border-radius: 20px;
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    padding: 20px;
+    max-width: 400px;
 }
 
 .permission-content i {
-    font-size: 64px;
+    font-size: 48px;
     margin-bottom: 20px;
     color: var(--primary-color);
-    animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.1); }
-    100% { transform: scale(1); }
 }
 
 .permission-content h2 {
-    margin-bottom: 15px;
-    font-size: 28px;
-    font-weight: 600;
-    color: white;
+    margin-bottom: 10px;
+    font-size: 24px;
 }
 
 .permission-content p {
-    margin-bottom: 25px;
-    font-size: 16px;
-    opacity: 0.9;
-    line-height: 1.5;
-}
-
-#requestPermissionBtn {
-    background-color: var(--primary-color);
-    color: white;
-    border: none;
-    padding: 15px 30px;
-    border-radius: 30px;
-    font-size: 18px;
-    font-weight: 600;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 15px rgba(74, 144, 226, 0.4);
-}
-
-#requestPermissionBtn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(74, 144, 226, 0.6);
-    background-color: #357abd;
-}
-
-#requestPermissionBtn i {
-    font-size: 20px;
-}
-
-/* Dark mode support for permission overlay */
-@media (prefers-color-scheme: dark) {
-    .permission-overlay {
-        background-color: rgba(0, 0, 0, 0.95);
-    }
-
-    .permission-content {
-        background-color: rgba(0, 0, 0, 0.5);
-        border-color: rgba(255, 255, 255, 0.1);
-    }
+    margin-bottom: 20px;
+    opacity: 0.8;
 }
 
 video {
     width: 100%;
-    height: 100%;
+    height: auto;
     display: block;
     transform: scaleX(1);
     transition: transform 0.3s ease;
-    object-fit: cover;
 }
 
 video.mirrored {
@@ -175,10 +109,10 @@ video.mirrored {
 
 .video-controls {
     position: absolute;
-    bottom: 10px;
-    right: 10px;
+    bottom: 20px;
+    right: 20px;
     display: flex;
-    gap: 10px;
+    gap: 15px;
     z-index: 10;
 }
 
@@ -187,14 +121,14 @@ video.mirrored {
     color: white;
     border: none;
     border-radius: 50%;
-    width: 40px;
-    height: 40px;
+    width: 45px;
+    height: 45px;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     transition: all 0.3s ease;
-    font-size: 16px;
+    font-size: 18px;
 }
 
 .control-btn:hover {
@@ -209,35 +143,33 @@ video.mirrored {
 .controls {
     display: flex;
     flex-direction: column;
-    gap: 15px;
+    gap: 20px;
     align-items: center;
     background-color: white;
-    padding: 15px;
+    padding: 20px;
     border-radius: 12px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    margin-top: auto;
 }
 
 .recording-info {
     display: flex;
     justify-content: space-between;
     width: 100%;
-    padding: 10px;
+    max-width: 400px;
+    padding: 15px;
     background-color: #f8f9fa;
     border-radius: 8px;
     font-weight: 500;
-    font-size: 14px;
 }
 
 .buttons {
     display: flex;
-    gap: 10px;
+    gap: 15px;
     justify-content: center;
-    width: 100%;
 }
 
 .btn {
-    padding: 10px 20px;
+    padding: 12px 24px;
     border: none;
     border-radius: 8px;
     cursor: pointer;
@@ -246,9 +178,7 @@ video.mirrored {
     align-items: center;
     gap: 8px;
     transition: all 0.3s ease;
-    font-size: 14px;
-    flex: 1;
-    justify-content: center;
+    font-size: 16px;
 }
 
 .btn:disabled {
@@ -279,20 +209,21 @@ video.mirrored {
 .camera-select {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 15px;
     background-color: #f8f9fa;
-    padding: 10px 15px;
+    padding: 15px 20px;
     border-radius: 8px;
     width: 100%;
+    max-width: 400px;
 }
 
 select {
-    padding: 8px;
+    padding: 10px;
     border-radius: 6px;
     border: 1px solid #ddd;
     background-color: white;
     flex: 1;
-    font-size: 14px;
+    font-size: 16px;
 }
 
 .status {
@@ -536,38 +467,23 @@ select {
 }
 
 /* Mobile adjustments */
-@media (max-width: 480px) {
+@media (max-width: 768px) {
     .container {
-        padding: 5px;
-    }
-
-    .video-container {
-        margin-bottom: 5px;
+        padding: 1.5rem;
+        margin: 10px;
     }
 
     .controls {
-        padding: 10px;
+        flex-direction: column;
+        align-items: stretch;
     }
 
-    .btn {
-        padding: 8px 15px;
-        font-size: 12px;
+    select, button {
+        width: 100%;
     }
 
-    .control-btn {
-        width: 35px;
-        height: 35px;
-        font-size: 14px;
-    }
-
-    .recording-info {
-        font-size: 12px;
-        padding: 8px;
-    }
-
-    .select {
-        padding: 6px;
-        font-size: 12px;
+    .video-container {
+        margin-bottom: 1rem;
     }
 
     .recordings-container {
@@ -584,119 +500,85 @@ select {
     }
 }
 
-.toggle-container {
-    position: fixed;
-    top: 10px;
-    right: 10px;
-    z-index: 1000;
-}
-
 .toggle-btn {
-    background-color: var(--primary-color);
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 10px 20px;
+    background-color: var(--accent-color);
     color: white;
     border: none;
-    padding: 8px 15px;
-    border-radius: 20px;
+    border-radius: 5px;
     cursor: pointer;
+    font-size: 16px;
+    z-index: 1000;
     display: flex;
     align-items: center;
     gap: 8px;
-    font-size: 14px;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-    transition: all 0.3s ease;
 }
 
 .toggle-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    background-color: var(--accent-hover);
 }
 
-.app-container {
-    transition: opacity 0.3s ease;
-}
-
-.app-container.hidden {
-    opacity: 0;
-    pointer-events: none;
-}
-
-/* Blog Styles */
-.blog-container {
+.study-blog {
+    display: none;
     max-width: 800px;
     margin: 0 auto;
     padding: 20px;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    font-family: Arial, sans-serif;
+}
+
+.study-blog.active {
+    display: block;
 }
 
 .blog-header {
     text-align: center;
     margin-bottom: 40px;
-    padding: 20px 0;
-    border-bottom: 1px solid #eee;
+    padding: 20px;
+    background-color: #f5f5f5;
+    border-radius: 8px;
 }
 
 .blog-header h1 {
-    font-size: 2.5rem;
-    color: var(--text-color);
+    color: #333;
     margin-bottom: 10px;
 }
 
-.blog-header p {
-    color: #666;
-    font-size: 1.1rem;
+.blog-content {
+    display: grid;
+    gap: 30px;
 }
 
 .blog-post {
-    margin-bottom: 40px;
-    padding: 20px;
     background-color: white;
+    padding: 25px;
     border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
 .blog-post h2 {
-    color: var(--text-color);
+    color: #2c3e50;
     margin-bottom: 10px;
 }
 
 .post-meta {
-    color: #666;
-    font-size: 0.9rem;
+    color: #7f8c8d;
+    font-size: 0.9em;
     margin-bottom: 15px;
 }
 
 .blog-post p {
+    color: #34495e;
     line-height: 1.6;
-    color: #444;
 }
 
-.blog-footer {
-    text-align: center;
-    padding: 20px 0;
-    color: #666;
-    border-top: 1px solid #eee;
-    margin-top: 40px;
+#mainContent {
+    display: block;
 }
 
-/* Dark mode support for blog */
-@media (prefers-color-scheme: dark) {
-    .blog-post {
-        background-color: #2d2d2d;
-    }
-
-    .blog-post h2 {
-        color: #f5f5f5;
-    }
-
-    .blog-post p {
-        color: #ccc;
-    }
-
-    .post-meta {
-        color: #999;
-    }
-
-    .blog-header, .blog-footer {
-        border-color: #444;
-    }
+#mainContent.hidden {
+    display: none;
 } 
