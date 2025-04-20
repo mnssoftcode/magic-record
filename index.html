@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Magic Record</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <meta name="theme-color" content="#4a90e2">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+</head>
+<body>
+    <div class="container">
+        <div class="video-container">
+            <div class="permission-overlay" id="permissionOverlay">
+                <div class="permission-content">
+                    <i class="fas fa-camera"></i>
+                    <h2>Camera & Microphone Access</h2>
+                    <p>Please allow camera and microphone access to start recording.</p>
+                    <button id="requestPermissionBtn" class="btn primary">
+                        <i class="fas fa-check"></i> Allow Access
+                    </button>
+                </div>
+            </div>
+            <video id="videoElement" autoplay playsinline></video>
+            <div class="video-controls">
+                <button id="mirrorBtn" class="control-btn">
+                    <i class="fas fa-sync-alt"></i>
+                </button>
+                <button id="torchBtn" class="control-btn" style="display: none;">
+                    <i class="fas fa-lightbulb"></i>
+                </button>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <div class="recording-info">
+                <span id="recordingStatus">Not Recording</span>
+                <span id="recordingTime">00:00:00</span>
+            </div>
+            <div class="buttons">
+                <button id="startBtn" class="btn primary">
+                    <i class="fas fa-circle"></i> Start
+                </button>
+                <button id="pauseBtn" class="btn secondary" disabled>
+                    <i class="fas fa-pause"></i> Pause
+                </button>
+                <button id="stopBtn" class="btn danger" disabled>
+                    <i class="fas fa-stop"></i> Stop
+                </button>
+            </div>
+            <div class="camera-select">
+                <label for="cameraSelect">Camera:</label>
+                <select id="cameraSelect">
+                    <option value="user">Front Camera</option>
+                    <option value="environment">Back Camera</option>
+                </select>
+            </div>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
