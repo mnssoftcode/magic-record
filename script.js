@@ -2,12 +2,14 @@ let mediaRecorder;
 let recordedChunks = [];
 let stream;
 let isRecording = false;
-let isMirrored = false;
+let isMirrored = true;
 let isPaused = false;
 let isTorchOn = false;
 let videoTrack;
 let recordingStartTime;
 let recordingTimer;
+let isMicEnabled = false;
+const micBtn = document.getElementById('micBtn');
 
 const videoElement = document.getElementById('videoElement');
 const startBtn = document.getElementById('startBtn');
@@ -20,6 +22,10 @@ const torchBtn = document.getElementById('torchBtn');
 const recordingTime = document.getElementById('recordingTime');
 const permissionOverlay = document.getElementById('permissionOverlay');
 const requestPermissionBtn = document.getElementById('requestPermissionBtn');
+const toggleBtn = document.getElementById('toggleBtn');
+const recordingApp = document.getElementById('recordingApp');
+const dummyBlog = document.getElementById('dummyBlog');
+let isBlogView = false;
 
 // Check if device is mobile
 const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
@@ -116,13 +122,15 @@ function handleOrientationChange() {
 }
 
 function toggleMirror() {
-    isMirrored = !isMirrored;
-    if (isMirrored) {
-        videoElement.classList.add('mirrored');
-        mirrorBtn.classList.add('active');
-    } else {
-        videoElement.classList.remove('mirrored');
-        mirrorBtn.classList.remove('active');
+    if (cameraSelect.value === 'user') {
+        isMirrored = !isMirrored;
+        if (isMirrored) {
+            videoElement.classList.add('mirrored');
+            mirrorBtn.classList.add('active');
+        } else {
+            videoElement.classList.remove('mirrored');
+            mirrorBtn.classList.remove('active');
+        }
     }
 }
 
@@ -133,6 +141,16 @@ function showError(message) {
         recordingStatus.textContent = 'Not Recording';
         recordingStatus.style.color = 'var(--text-color)';
     }, 3000);
+}
+
+function updateMicButton() {
+    if (isMicEnabled) {
+        micBtn.innerHTML = '<i class="fas fa-microphone"></i>';
+        micBtn.classList.add('active');
+    } else {
+        micBtn.innerHTML = '<i class="fas fa-microphone-slash"></i>';
+        micBtn.classList.remove('active');
+    }
 }
 
 async function setupCamera(facingMode) {
@@ -159,7 +177,13 @@ async function setupCamera(facingMode) {
                 width: { ideal: isMobile ? 1280 : 1920 },
                 height: { ideal: isMobile ? 720 : 1080 }
             },
-            audio: true
+            audio: isMicEnabled ? {
+                echoCancellation: true,
+                noiseSuppression: true,
+                autoGainControl: true,
+                sampleRate: 48000,
+                channelCount: 1
+            } : false
         };
 
         stream = await navigator.mediaDevices.getUserMedia(constraints);
@@ -168,12 +192,17 @@ async function setupCamera(facingMode) {
 
         // Update torch button state after a short delay to ensure video track is ready
         setTimeout(updateTorchButton, 500);
+        setTimeout(updateMicButton, 500);
 
-        // Apply mirror effect if enabled
-        if (isMirrored) {
+        // Apply mirror effect if using front camera
+        if (facingMode === 'user') {
+            isMirrored = true;
             videoElement.classList.add('mirrored');
+            mirrorBtn.classList.add('active');
         } else {
+            isMirrored = false;
             videoElement.classList.remove('mirrored');
+            mirrorBtn.classList.remove('active');
         }
 
         // Handle orientation changes on mobile
@@ -187,7 +216,8 @@ async function setupCamera(facingMode) {
             const mimeType = getSupportedMIME();
             mediaRecorder = new MediaRecorder(stream, {
                 mimeType: mimeType,
-                videoBitsPerSecond: isMobile ? 2500000 : 5000000
+                videoBitsPerSecond: isMobile ? 2500000 : 5000000,
+                audioBitsPerSecond: 128000
             });
 
             recordedChunks = [];
@@ -231,17 +261,40 @@ async function setupCamera(facingMode) {
 
 // Function to download video
 function downloadVideo(blob, filename) {
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.style.display = 'none';
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    setTimeout(() => {
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-    }, 100);
+    try {
+        // Try using the download attribute first
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        
+        // Clean up
+        setTimeout(() => {
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }, 100);
+    } catch (error) {
+        console.error('Error downloading with download attribute:', error);
+        
+        // Fallback for Brave browser
+        try {
+            const reader = new FileReader();
+            reader.onload = function() {
+                const base64data = reader.result;
+                const link = document.createElement('a');
+                link.href = base64data;
+                link.download = filename;
+                link.click();
+            };
+            reader.readAsDataURL(blob);
+        } catch (fallbackError) {
+            console.error('Error with fallback download method:', fallbackError);
+            showError('Could not download the video. Please try a different browser or method.');
+        }
+    }
 }
 
 // Function to update recording time
@@ -332,11 +385,11 @@ startBtn.addEventListener('click', async () => {
         await setupCamera(facingMode);
 
         const mimeType = getSupportedMIME();
-        const fileExtension = 'mp4';
 
         mediaRecorder = new MediaRecorder(stream, {
             mimeType: mimeType,
-            videoBitsPerSecond: isMobile ? 2500000 : 5000000
+            videoBitsPerSecond: isMobile ? 2500000 : 5000000,
+            audioBitsPerSecond: 128000
         });
 
         recordedChunks = [];
@@ -349,11 +402,10 @@ startBtn.addEventListener('click', async () => {
 
         mediaRecorder.onstop = () => {
             const blob = new Blob(recordedChunks, { type: mimeType });
-            const filename = `recording-${new Date().toISOString().replace(/[:.]/g, '-')}.${fileExtension}`;
+            const filename = `recording-${new Date().toISOString().replace(/[:.]/g, '-')}.mp4`;
             downloadVideo(blob, filename);
             recordedChunks = [];
             
-            // Stop recording timer
             clearInterval(recordingTimer);
             if (recordingTime) {
                 recordingTime.textContent = '00:00:00';
@@ -396,3 +448,35 @@ stopBtn.addEventListener('click', () => {
         }
     }
 });
+
+function toggleMic() {
+    isMicEnabled = !isMicEnabled;
+    updateMicButton();
+    
+    if (stream) {
+        const audioTracks = stream.getAudioTracks();
+        audioTracks.forEach(track => {
+            track.enabled = isMicEnabled;
+        });
+    }
+}
+
+// Add event listener for mic button
+micBtn.addEventListener('click', toggleMic);
+
+// Add this function to handle view switching
+function toggleView() {
+    isBlogView = !isBlogView;
+    if (isBlogView) {
+        recordingApp.style.display = 'none';
+        dummyBlog.style.display = 'block';
+        toggleBtn.innerHTML = '<i class="fas fa-camera"></i> Switch';
+    } else {
+        recordingApp.style.display = 'block';
+        dummyBlog.style.display = 'none';
+        toggleBtn.innerHTML = '<i class="fas fa-eye"></i> Switch View';
+    }
+}
+
+// Add event listener for toggle button
+toggleBtn.addEventListener('click', toggleView);
