@@ -444,39 +444,38 @@ async function startRecording() {
         const mimeType = getSupportedMIME();
         mediaRecorder = new MediaRecorder(stream, {
             mimeType: mimeType,
-            videoBitsPerSecond: isMobile ? 2500000 : 5000000,
+            videoBitsPerSecond: isMobile ? 1500000 : 5000000, // Reduced bitrate for mobile
             audioBitsPerSecond: isMicEnabled ? 128000 : 0
         });
 
         recordedChunks = [];
+        let chunkIndex = 0;
+        
         mediaRecorder.ondataavailable = (event) => {
             if (event.data.size > 0) {
                 recordedChunks.push(event.data);
-                // Save chunks periodically to prevent memory issues
-                if (recordedChunks.length > 10) {
+                
+                // Save chunks more frequently on mobile to prevent memory issues
+                if (isMobile && recordedChunks.length >= 5) {
                     const blob = new Blob(recordedChunks, { type: mimeType });
-                    const filename = `recording-part-${new Date().toISOString().replace(/[:.]/g, '-')}.mp4`;
+                    const filename = `recording-part-${chunkIndex}-${new Date().toISOString().replace(/[:.]/g, '-')}.mp4`;
                     downloadVideo(blob, filename);
                     recordedChunks = [];
+                    chunkIndex++;
+                } else if (!isMobile && recordedChunks.length >= 10) {
+                    const blob = new Blob(recordedChunks, { type: mimeType });
+                    const filename = `recording-part-${chunkIndex}-${new Date().toISOString().replace(/[:.]/g, '-')}.mp4`;
+                    downloadVideo(blob, filename);
+                    recordedChunks = [];
+                    chunkIndex++;
                 }
             }
         };
 
-        mediaRecorder.onstop = () => {
-            if (recordedChunks.length > 0) {
-                const blob = new Blob(recordedChunks, { type: mimeType });
-                const filename = `recording-${new Date().toISOString().replace(/[:.]/g, '-')}.mp4`;
-                downloadVideo(blob, filename);
-                recordedChunks = [];
-            }
-            
-            clearInterval(recordingTimer);
-            if (recordingTime) {
-                recordingTime.textContent = '00:00:00';
-            }
-        };
-
-        mediaRecorder.start(1000);
+        // Start with a smaller timeslice for mobile
+        const timeslice = isMobile ? 500 : 1000;
+        mediaRecorder.start(timeslice);
+        
         isRecording = true;
         recordingStartTime = Date.now();
         recordingTimer = setInterval(updateRecordingTime, 1000);
